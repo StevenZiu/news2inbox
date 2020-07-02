@@ -8,15 +8,13 @@ Fully configurable news subscribe widget, send headlines from different countrie
 
 :dart: Design schema for user and subscribe tables
 
-:dart: Api endpoints for authentication
+:dart: Api endpoints for authentication (JWT)
 
-:dart: Post api for create new subscribe
+:dart: Api for create/remove/update/get subscribe
 
-:dart: Patch api to update subscribe
+:dart: Prepare email template (email-templates)
 
-:dart: Prepare email template
-
-:dart: Api to fetch news
+:dart: Log system to track sent emails
 
 :dart: Timer function to fetch news and send email automatically
 
@@ -24,6 +22,6 @@ Fully configurable news subscribe widget, send headlines from different countrie
 
 #### Frontend
 
-:dart: UI to register/login/forgot password/reset password
+:dart: UI to register/login/forgot/reset password
 
-:dart: UI for subscribe (add/remove/update category/time/country)
+:dart: UI for subscribe manipulation
