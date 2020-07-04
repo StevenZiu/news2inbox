@@ -1,6 +1,6 @@
 create database if not exists news2inbox;
 
-use News2Inbox;
+use news2inbox;
 
 create table if not exists users (
   uid int auto_increment,
