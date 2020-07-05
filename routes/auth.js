@@ -30,27 +30,27 @@ router.post(
     }
     // check if email hash already been taken
     const db = req.app.db
+    const { email, password, username } = req.body
     const duplicateSql = `select * from users where user_email = ${db.escape(
-      req.body.email
+      email
     )}`
-
+    // execute duplicate check
     db.query(duplicateSql, (err, results, field) => {
       if (err) {
         res.status(500).json({ errors: "server Error" })
         console.log(chalk.red.inverse(err.sqlMessage))
         return
       }
-
       if (results.length !== 0) {
         res.status(400).json({ errors: "Email has already been taken." })
         return
       }
       // generate password hash
-      const hashpassword = sha256(req.body.password).substr(0, 20)
+      const hashpassword = sha256(password).substr(0, 20)
       const registerSql = `insert into users (username, user_email, password) values (${db.escape(
-        req.body.username
-      )}, ${db.escape(req.body.email)}, ${db.escape(hashpassword)})`
-
+        username
+      )}, ${db.escape(email)}, ${db.escape(hashpassword)})`
+      // execute register sql
       db.query(registerSql, (err, results, field) => {
         if (err) {
           res.status(500).json({ errors: "server Error" })
