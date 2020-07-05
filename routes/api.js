@@ -1,12 +1,12 @@
-const express = require('express')
+const express = require("express")
 const router = express.Router()
 
-// const authRouter = require('./auth')
+const authRouter = require("./auth")
 
-router.get('/health', (req, res, next) => {
-  res.status(200).send({message: 'api is up'})
+router.get("/health", (req, res, next) => {
+  res.status(200).send({ message: "api is up" })
 })
 
-// router.use('/auth', authRouter)
+router.use("/auth", authRouter)
 
 module.exports = router

@@ -15,6 +15,7 @@ const mailService = async (app) => {
   mail.verify((err, success) => {
     if (err) {
       console.log(chalk.red.inverse("Connect mail server failed"), err.message)
+      app.mailer = null
     } else if (success) {
       console.log(chalk.cyan.inverse("Connect mail server success"))
       app.mailer = mail
