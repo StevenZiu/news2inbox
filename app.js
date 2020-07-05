@@ -3,10 +3,11 @@ var express = require("express")
 var path = require("path")
 var cookieParser = require("cookie-parser")
 var logger = require("morgan")
-
 const cors = require("cors")
 const bodyParser = require("body-parser")
+const chalk = require("chalk")
 const { connectDB } = require("./services/connectDB")
+const { mailService } = require("./services/mail")
 
 require("dotenv").config()
 
@@ -14,7 +15,11 @@ const indexRouter = require("./routes/index")
 
 const app = express()
 
+// check db connection
 connectDB(app)
+
+// check mail server connection
+mailService(app)
 
 app.use(cors())
 

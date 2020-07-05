@@ -6,7 +6,7 @@ Fully configurable news subscribe widget, send headlines from different countrie
 
 #### Backend
 
-:dart: Design schema for user and subscribe tables
+:white_check_mark: Design schema for user and subscribe tables
 
 :dart: Api endpoints for authentication (JWT)
 
