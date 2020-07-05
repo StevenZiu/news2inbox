@@ -111,6 +111,7 @@ router.post(
           return
         }
         // TODO: one user can only have one jwt in an hour
+        // maybe need to setup a table for storing jwt token
         jwt.sign(
           userInfoInJwt,
           secret,
