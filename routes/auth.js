@@ -4,6 +4,7 @@ const sha256 = require("sha256")
 const jwt = require("jsonwebtoken")
 const chalk = require("chalk")
 const { check, validationResult } = require("express-validator")
+
 // register route
 router.post(
   "/register",
@@ -66,58 +67,72 @@ router.post(
 )
 
 // login route
-// router.post("/login", (req, res, next) => {
-//   const { email = null, password = null } = req.body
-//   if (email === null || password === null) {
-//     res.status(400).send("Login information missing.")
-//     return
-//   }
-//   const cleanEmail = req.sanitize(email)
-//   const cleanPassword = req.sanitize(password)
-//   const loginSql = `select * from Users where email_address='${cleanEmail}'`
-//   const db = req.app.db
-//   db.query(loginSql, (err, results, field) => {
-//     if (err) {
-//       res.status(500).send("Server Error")
-//       console.log(err.sqlMessage)
-//       return
-//     }
-//     if (
-//       results.length !== 0 &&
-//       results[0].login_password === sha256(cleanPassword).substr(0, 20)
-//     ) {
-//       // login success, generate the jwt
-//       // attach the user information in the jwt
-//       const userInfoInJwt = {
-//         user_id: results[0].user_id,
-//         user_email: results[0].email_address,
-//       }
-//       const secret = process.env.JWT_SECRET
-//       if (!secret) {
-//         res.status(500).send("Server Error")
-//         console.log("JWT secret missing")
-//         return
-//       }
-//       // TODO: one user can only have one jwt in an hour
-//       jwt.sign(
-//         userInfoInJwt,
-//         secret,
-//         { expiresIn: "1h", algorithm: "HS256" },
-//         (err, token) => {
-//           if (err) {
-//             res.status(500).send("Server Error")
-//             console.log(err)
-//             return
-//           }
-//           res.status(200).send(token)
-//           return
-//         }
-//       )
-//     } else {
-//       res.status(400).send("Email or passowrd does not match.")
-//     }
-//   })
-// })
+router.post(
+  "/login",
+  [
+    check("email")
+      .isEmail()
+      .withMessage("Email is missing or not a valid email"),
+    check("password").notEmpty().withMessage("Password is missing"),
+  ],
+  (req, res, next) => {
+    // check if any errors from body data
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+    }
+    // prestore data
+    const { email, password } = req.body
+    const db = req.app.db
+    // login sql
+    const loginSql = `select * from Users where user_email=${db.escape(email)}`
+    // execute login sql
+    db.query(loginSql, (err, results, field) => {
+      if (err) {
+        res.status(500).send({ errors: "Server Error" })
+        console.log(chalk.red.inverse(err.sqlMessage))
+        return
+      }
+      if (
+        results.length !== 0 &&
+        results[0].password === sha256(password).substr(0, 20)
+      ) {
+        // login success, generate the jwt
+        // attach the user information in the jwt
+        const userInfoInJwt = {
+          username: results[0].username,
+          uid: results[0].uid,
+        }
+        const secret = process.env.JWT_SECRET
+        // check secret existing
+        if (!secret) {
+          res.status(500).send({ errors: "Server Error" })
+          console.log(chalk.red.inverse("JWT secret missing"))
+          return
+        }
+        // TODO: one user can only have one jwt in an hour
+        jwt.sign(
+          userInfoInJwt,
+          secret,
+          { expiresIn: "1h", algorithm: "HS256" },
+          (err, token) => {
+            if (err) {
+              res.status(500).send({ errors: "Server Error" })
+              console.log(chalk.red.inverse(err))
+              return
+            }
+            res.status(200).json({ token })
+            return
+          }
+        )
+      } else {
+        res
+          .status(400)
+          .send({ errors: "Email or passowrd does not match or not exist" })
+      }
+    })
+  }
+)
 
 // // forgot password route
 // router.post("/forgot-password", (req, res, next) => {
