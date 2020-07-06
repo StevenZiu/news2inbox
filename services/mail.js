@@ -12,6 +12,7 @@ const mailService = async (app) => {
       pass: process.env.SMTP_Password,
     },
   })
+  // verify mail connection
   mail.verify((err, success) => {
     if (err) {
       console.log(chalk.red.inverse("Connect mail server failed"), err.message)
