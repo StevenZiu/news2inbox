@@ -26,7 +26,7 @@ Fully configurable news subscribe widget, send headlines from different countrie
 
 :dart: UI for subscribe manipulation
 
-### Part Technique Explain
+### Part of Techniques Explain
 
 #### Reset password flow with JWT
 
