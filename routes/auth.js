@@ -89,7 +89,7 @@ router.post(
     // execute login sql
     db.query(loginSql, (err, results, field) => {
       if (err) {
-        res.status(500).send({ errors: "Server Error" })
+        res.status(500).json({ errors: "Server Error" })
         console.log(chalk.red.inverse(err.sqlMessage))
         return
       }
@@ -106,7 +106,7 @@ router.post(
         const secret = process.env.JWT_SECRET
         // check secret existing
         if (!secret) {
-          res.status(500).send({ errors: "Server Error" })
+          res.status(500).json({ errors: "Server Error" })
           console.log(chalk.red.inverse("JWT secret missing"))
           return
         }
@@ -118,7 +118,7 @@ router.post(
           { expiresIn: "1h", algorithm: "HS256" },
           (err, token) => {
             if (err) {
-              res.status(500).send({ errors: "Server Error" })
+              res.status(500).json({ errors: "Server Error" })
               console.log(chalk.red.inverse(err))
               return
             }
@@ -129,7 +129,7 @@ router.post(
       } else {
         res
           .status(400)
-          .send({ errors: "Email or passowrd does not match or not exist" })
+          .json({ errors: "Email or passowrd does not match or not exist" })
       }
     })
   }
@@ -223,82 +223,120 @@ router.post(
   }
 )
 
-// // check reset password token
-// router.get("/reset-password", (req, res, next) => {
-//   const token = req.query.token
-//   if (token === undefined || token === "") {
-//     res.status(400).send("reset token missing")
-//   }
-//   const decodedToken = jwt.decode(token)
-//   const { email } = decodedToken
-//   const db = req.app.db
-//   const getUserOldPassword = `select * from Users where email_address = '${email}'`
-//   db.query(getUserOldPassword, (err, result) => {
-//     if (err) {
-//       res.status(500).send("Server Error")
-//       console.log(err.sqlMessage)
-//       return
-//     }
-//     if (result.length !== 0) {
-//       const { login_password } = result[0]
-//       jwt.verify(token, login_password, (err, decoded) => {
-//         if (err) {
-//           console.log(err)
-//           res.status(400).send(`Token verified failed: ${err}`)
-//           return
-//         }
-//         res.status(200).send(`Token verifed success: ${decoded.email}`)
-//       })
-//     } else {
-//       res.status(400).send("Token Verified Failed")
-//     }
-//   })
-// })
+// check reset password token
+router.post(
+  "/reset-password-token-check",
+  [check("token").notEmpty().withMessage("reset token is missing")],
+  (req, res, next) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+    }
+    const { db } = req.app
+    const { token } = req.body
+    const decodedToken = jwt.decode(token)
+    if (decodedToken === null) {
+      res.status(400).json({ errors: "token format incorrect" })
+      return
+    }
+    const { email } = decodedToken
+    const getUserOldPassword = `select * from Users where user_email = ${db.escape(
+      email
+    )}`
+    db.query(getUserOldPassword, (err, result) => {
+      if (err) {
+        res.status(500).json({ errors: "Server Error" })
+        console.log(chalk.red.inverse(err.sqlMessage))
+        return
+      }
+      if (result.length !== 0) {
+        const { password } = result[0]
+        jwt.verify(token, password, (err, decoded) => {
+          if (err) {
+            console.log(chalk.red.inverse(err))
+            res.status(400).json(`Token verified failed: ${err}`)
+            return
+          }
+          res.status(200).json(`Token verifed success: ${decoded.email}`)
+        })
+      } else {
+        res.status(400).json("Token Verified Failed")
+      }
+    })
+  }
+)
 
-// // set new password
-// router.post("/new-password", (req, res, next) => {
-//   // token for reset password
-//   let { token, password } = req.body
-//   token = req.sanitize(token)
-//   password = req.sanitize(password)
-//   if (token === undefined || token === "") {
-//     res.status(400).send("reset token missing")
-//   }
-//   const decodedToken = jwt.decode(token)
-//   const { email } = decodedToken
-//   const db = req.app.db
-//   const getUserOldPassword = `select * from Users where email_address = '${email}'`
-//   db.query(getUserOldPassword, (err, result) => {
-//     if (err) {
-//       res.status(500).send("Server Error")
-//       console.log(err.sqlMessage)
-//       return
-//     }
-//     if (result.length !== 0) {
-//       const { login_password } = result[0]
-//       jwt.verify(token, login_password, (err, decoded) => {
-//         if (err) {
-//           console.log(err)
-//           res.status(400).send(`Token verified failed: ${err}`)
-//           return
-//         }
-//         const newPassword = sha256(password).substr(0, 20)
-//         const changePassword = `update Users set login_password = '${newPassword}' where email_address = '${email}'`
-//         db.query(changePassword, (err, result) => {
-//           if (err) {
-//             console.log(err.sqlMessage)
-//             res.status(500).send("Server Error")
-//             return
-//           }
-//           if (result.affectedRows === 1) {
-//             res.status(201).send("New password updated")
-//           }
-//         })
-//       })
-//     } else {
-//       res.status(400).send("Token Verified Failed")
-//     }
-//   })
-// })
+// set new password
+router.post(
+  "/new-password",
+  [
+    check("token").notEmpty().withMessage("token is missing"),
+    check("password")
+      .isLength({ min: 5, max: 40 })
+      .withMessage(
+        "New password is required and length should be between 5 to 40 chars"
+      ),
+  ],
+  (req, res, next) => {
+    // check if any errors from body data
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+    }
+    // deconstruct data
+    const { mailer, db } = req.app
+    const { token, password } = req.body
+    // decode token to get email
+
+    const decodedToken = jwt.decode(token)
+    if (decodedToken === null) {
+      res.status(400).json({ errors: "token format incorrect" })
+      return
+    }
+    // get old password as secret
+    const { email = null } = decodedToken
+    const getUserOldPassword = `select * from Users where user_email = ${db.escape(
+      email
+    )}`
+    db.query(getUserOldPassword, (err, result) => {
+      if (err) {
+        res.status(500).json({ errors: "Server Error" })
+        console.log(chalk.red.inverse(err.sqlMessage))
+        return
+      }
+      if (result.length !== 0) {
+        const { password } = result[0]
+        jwt.verify(token, password, (err, decoded) => {
+          if (err) {
+            console.log(chalk.red.inverse(err))
+            res.status(400).json({ errors: `token validation failed: ${err}` })
+            return
+          }
+          const newPassword = sha256(password).substr(0, 20)
+          const changePassword = `update Users set password = ${db.escape(
+            newPassword
+          )} where user_email = ${db.escape(email)}`
+          db.query(changePassword, (err, result) => {
+            if (err) {
+              console.log(chalk.red.inverse(err.sqlMessage))
+              res.status(500).json({ errors: "Server Error" })
+              return
+            }
+            if (result.affectedRows === 1) {
+              res.status(201).json({ message: "New password updated" })
+            }
+          })
+        })
+      } else {
+        console.log(
+          chalk.red.inverse(
+            `someone is trying to set new password for non exising user email ${email}`
+          )
+        )
+        res.status(400).json({ errors: `token validation failed: ${err}` })
+      }
+    })
+  }
+)
 
 module.exports = router
