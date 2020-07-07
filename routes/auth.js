@@ -135,81 +135,93 @@ router.post(
   }
 )
 
-// // forgot password route
-// router.post("/forgot-password", (req, res, next) => {
-//   const { email = null } = req.body
-//   const cleanEmail = req.sanitize(email)
-//   if (cleanEmail === null || cleanEmail === "") {
-//     res.status(400).send("Email is missing")
-//     return
-//   }
-//   const checkUserExistSql = `select * from Users where email_address = '${cleanEmail}'`
-//   const db = req.app.db
-//   db.query(checkUserExistSql, (err, result, field) => {
-//     if (err) {
-//       res.status(500).send("Server Error")
-//       console.log(err.sqlMessage)
-//       return
-//     }
-//     if (result.length !== 0) {
-//       const passwordAsJWTSecret = result[0].login_password
-//       jwt.sign(
-//         { email: cleanEmail },
-//         passwordAsJWTSecret,
-//         // token expires in 10 mins
-//         { expiresIn: "1h", algorithm: "HS256" },
-//         async (err, token) => {
-//           if (err) {
-//             res.status(500).send("Server Error")
-//             console.log(`Generate reset jwt token failed: ${err}`)
-//             return
-//           }
-//           // send the reset the password email
-//           let mailInfo
-//           try {
-//             mailInfo = await mailer.sendMail({
-//               from: '"Tomato Notes Team👻" <tomatonotes1@gmail.com>', // sender address
-//               to: cleanEmail, // list of receivers
-//               subject: "Reset Password for Tomato Notes", // Subject line
-//               html: `
-//                 <p>Please click the following link to reset your password for Tomato Notes: </p>
-//                 <br/>
-//                 <p>https://google.com?token=${token}</p>
-//                 <br/>
-//                 <p>The link will expire in 10 minutes, and you can only use this link to reset your password one time.</p>
-//                 <br/>
-//                 <p>Tomato Notes Team</p>
-//               `,
-//             })
-//           } catch (err) {
-//             console.log(`mail sent fail: ${err}`)
-//           }
+// forgot password route
+router.post(
+  "/forgot-password",
+  [
+    check("email")
+      .isEmail()
+      .withMessage("Email is missing or not a valid email"),
+  ],
+  (req, res, next) => {
+    // check if any errors from body data
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+    }
+    const { email } = req.body
+    const { db, mailer } = req.app
+    const checkUserExistSql = `select * from Users where user_email = ${db.escape(
+      email
+    )}`
+    db.query(checkUserExistSql, (err, result, field) => {
+      if (err) {
+        res.status(500).json({ errors: "Server Error" })
+        console.log(err.sqlMessage)
+        return
+      }
+      if (result.length !== 0) {
+        const passwordAsJWTSecret = result[0].password
+        jwt.sign(
+          { email },
+          passwordAsJWTSecret,
+          // token expires in 1 hour
+          { expiresIn: "1h", algorithm: "HS256" },
+          async (err, token) => {
+            if (err) {
+              res.status(500).json({ errors: "Server Error" })
+              console.log(`Generate reset jwt token failed: ${err}`)
+              return
+            }
+            // send the reset the password email
+            let mailInfo
+            try {
+              mailInfo = await mailer.sendMail({
+                from: '"News2Inbox👻" <news2inboxcs@gmail.com>', // sender address
+                to: email, // list of receivers
+                subject: "Reset Password for News2Inbox", // Subject line
+                html: `
+                <p>Someone is trying to reset your password for News2Inbox account, if that's you, please click the following link to reset your password, otherwise please ignore this email</p>
+                <br/>
+                <p>https://google.com?token=${token}</p>
+                <br/>
+                <p>The link will expire in 1 hour, and you can only use this link to reset your password one time.</p>
+                <br/>
+                <p>News2Inbox Customer Service Team</p>
+              `,
+              })
+            } catch (err) {
+              console.log(chalk.red.inverse(`mail sent fail: ${err}`))
+            }
 
-//           if (mailInfo.messageId) {
-//             console.log(
-//               `reset mail sent: ${mailInfo.messageId}, for user: ${cleanEmail}`
-//             )
-//           } else {
-//             console.log(`mail sent fail for user: ${cleanEmail}`)
-//           }
-//         }
-//       )
-//     } else {
-//       // log to tell backend, someone is trying to reset the password for non-existing users
-//       console.log(
-//         chalk.red(
-//           `Warning: someone is trying to reset the password for non-existing user: ${cleanEmail}`
-//         )
-//       )
-//     }
-//     // return 200 anyway for client side
-//     res
-//       .status(200)
-//       .send(
-//         "If your email exists in our database, we will send an reset password email to that."
-//       )
-//   })
-// })
+            if (mailInfo.messageId) {
+              console.log(
+                chalk.green.inverse(
+                  `reset mail sent: ${mailInfo.messageId}, for user: ${email}`
+                )
+              )
+            } else {
+              console.log(`mail sent fail for user: ${email}`)
+            }
+          }
+        )
+      } else {
+        // log to tell backend, someone is trying to reset the password for non-existing users
+        console.log(
+          chalk.red(
+            `Warning: someone is trying to reset the password for non-existing user: ${email}`
+          )
+        )
+      }
+      // return 200 anyway for client side
+      res
+        .status(200)
+        .json(
+          "If your email exists in our database, we will send an reset password email to that."
+        )
+    })
+  }
+)
 
 // // check reset password token
 // router.get("/reset-password", (req, res, next) => {
