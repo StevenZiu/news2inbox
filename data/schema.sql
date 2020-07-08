@@ -15,7 +15,7 @@ create table if not exists subscribe (
   record_id int auto_increment,
   countries varchar(10) not null,
   categories varchar(100) not null,
-  number_of_total_articles int not null,
+  /* number_of_total_articles int not null, */
   uid int,
   primary key (record_id),
   foreign key (uid) references users(uid)
