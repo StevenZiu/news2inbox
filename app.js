@@ -6,6 +6,7 @@ var logger = require("morgan")
 const cors = require("cors")
 const bodyParser = require("body-parser")
 const chalk = require("chalk")
+const bearToken = require("express-bearer-token")
 const { connectDB } = require("./services/connectDB")
 const { mailService } = require("./services/mail")
 
@@ -22,7 +23,7 @@ connectDB(app)
 mailService(app)
 
 app.use(cors())
-
+app.use(bearToken())
 // view engine setup
 app.set("views", path.join(__dirname, "views"))
 app.set("view engine", "jade")
