@@ -3,7 +3,8 @@ const router = express.Router()
 const chalk = require("chalk")
 const { check, validationResult, body } = require("express-validator")
 const { supportedCountries, supportedCategories } = require("../config/const")
-// create new subscribe
+
+// create/update new subscribe
 // for current beta version, each user can only subscribe to one country with 2 categories
 // @inbody country in string, categaries in "business+entertainment"
 // category is optional
