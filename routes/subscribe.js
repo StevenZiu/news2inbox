@@ -54,4 +54,57 @@ router.post(
   }
 )
 
+// get subscribe
+router.get("/", (req, res, next) => {
+  const { uid } = req.userInfo
+  const db = req.app.db
+  const getSubscribeSql = `select * from subscribe where uid=${uid}`
+  db.query(getSubscribeSql, (err, results, field) => {
+    if (err) {
+      res.status(500).json({ errors: "server Error" })
+      console.log(chalk.red.inverse(err.sqlMessage))
+      return
+    }
+    if (results.length > 0) {
+      res.status(200).json(results[0])
+    } else {
+      res.status(200).json([])
+    }
+  })
+})
+
+// remove subscribe
+router.delete(
+  "/",
+  [check("recordId").notEmpty().withMessage("subscribe record id is missing")],
+  (req, res, next) => {
+    // check if any errors
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+    }
+    const db = req.app.db
+    const { uid } = req.userInfo
+    const { recordId } = req.body
+    const deleteSubcribeSql = `delete from subscribe where uid = ${uid} and record_id = ${db.escape(
+      recordId
+    )}`
+    db.query(deleteSubcribeSql, (err, results, field) => {
+      if (err) {
+        res.status(500).json({ errors: "server Error" })
+        console.log(chalk.red.inverse(err.sqlMessage))
+        return
+      } else if (results.affectedRows === 1) {
+        res.status(201).json({
+          message: "deleted",
+        })
+      } else {
+        res.status(400).json({
+          errors:
+            "you don't have permission to delete the record or record does not exist",
+        })
+      }
+    })
+  }
+)
 module.exports = router
