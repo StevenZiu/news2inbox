@@ -2,6 +2,8 @@
 
 Fully configurable news subscribe widget, send headlines from different countries and categories to your mail inbox everyday at the time you appointed.
 
+Beta version each user account can only subscribe to one country with two categories.
+
 ### TODO
 
 #### Backend
@@ -10,7 +12,7 @@ Fully configurable news subscribe widget, send headlines from different countrie
 
 :white_check_mark: Api endpoints for authentication (JWT)
 
-:dart: Api for create/remove/update/get subscribe
+:white_check_mark: Api for create/remove/update/get subscribe
 
 :dart: Prepare email template (email-templates)
 
