@@ -25,6 +25,8 @@ router.use((req, res, next) => {
         res.status(403).json(`Unauthorized request`)
         return
       }
+      req.userInfo = { username: decoded.username, uid: decoded.uid }
+      console.log(decoded)
       next()
     })
   }
