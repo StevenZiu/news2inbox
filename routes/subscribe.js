@@ -34,6 +34,7 @@ router.post(
       }
     }
     const db = req.app.db
+    // each user can only have one subscribe record, if duplicate will be trated as update subscribe
     const newSubscribeSql = `insert into subscribe (uid, countries, categories) values (${uid}, ${db.escape(
       country
     )}, ${db.escape(
@@ -99,6 +100,7 @@ router.delete(
           message: "deleted",
         })
       } else {
+        // delete failed means either someone trys to delete others' record with his own jwt token or record does not exist
         res.status(400).json({
           errors:
             "you don't have permission to delete the record or record does not exist",
