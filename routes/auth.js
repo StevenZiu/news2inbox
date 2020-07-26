@@ -4,6 +4,9 @@ const sha256 = require("sha256")
 const jwt = require("jsonwebtoken")
 const chalk = require("chalk")
 const { check, validationResult } = require("express-validator")
+const fs = require("fs")
+const handlebars = require("handlebars")
+const path = require("path")
 
 // register route
 router.post(
@@ -174,21 +177,26 @@ router.post(
               return
             }
             // send the reset the password email
+            // load email template
+            const mailTemplate = fs
+              .readFileSync(
+                path.join(__dirname, "../assets/reset-password.html"),
+                "utf-8"
+              )
+              .toString()
+            const compiledTemplate = handlebars.compile(mailTemplate)
+            // interpolate token to template
+            // TODO: pass E2/E3 link here
+            const withTokenTemplate = compiledTemplate({
+              resetLink: `https://google.com?token=${token}`,
+            })
             let mailInfo
             try {
               mailInfo = await mailer.sendMail({
                 from: '"News2Inbox👻" <news2inboxcs@gmail.com>', // sender address
                 to: email, // list of receivers
                 subject: "Reset Password for News2Inbox", // Subject line
-                html: `
-                <p>Someone is trying to reset your password for News2Inbox account, if that's you, please click the following link to reset your password, otherwise please ignore this email</p>
-                <br/>
-                <p>https://google.com?token=${token}</p>
-                <br/>
-                <p>The link will expire in 1 hour, and you can only use this link to reset your password one time.</p>
-                <br/>
-                <p>News2Inbox Customer Service Team</p>
-              `,
+                html: withTokenTemplate,
               })
             } catch (err) {
               console.log(chalk.red.inverse(`mail sent fail: ${err}`))
