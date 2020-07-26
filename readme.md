@@ -14,7 +14,7 @@ Beta version each user account can only subscribe to one country with two catego
 
 :white_check_mark: Api for create/remove/update/get subscribe
 
-:dart: Prepare email template (email-templates)
+:white_check_mark: Prepare email template (email-templates)
 
 :dart: Log system to track sent emails
 
