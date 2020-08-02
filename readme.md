@@ -14,13 +14,17 @@ Beta version each user account can only subscribe to one country with two catego
 
 :white_check_mark: Api for create/remove/update/get subscribe
 
-:white_check_mark: Prepare email template (email-templates)
+:white_check_mark: Prepare email template for auth(email-templates)
 
-:dart: Log system to track sent emails
+:dart: Prepare email template for news(email-templates)
 
-:dart: Timer function to fetch news and send email automatically
+:white_check_mark: Fetch news service api
+
+:dart: Timer function to call fetch news service and render in the email template
 
 :dart: Add rate limit
+
+:dart: Log system to track sent emails
 
 #### Frontend
 

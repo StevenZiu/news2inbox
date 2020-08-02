@@ -105,6 +105,7 @@ router.post(
         const userInfoInJwt = {
           username: results[0].username,
           uid: results[0].uid,
+          userEmail: results[0].user_email,
         }
         const secret = process.env.JWT_SECRET
         // check secret existing
