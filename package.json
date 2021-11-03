@@ -27,6 +27,6 @@
     "mysql": "2.18.1",
     "nodemailer": "^6.4.10",
     "sha256": "0.2.0",
-    "validator": "^11.1.0"
+    "validator": "^13.7.0"
   }
 }
